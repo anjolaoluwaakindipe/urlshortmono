@@ -29,6 +29,8 @@ jobs:
         with:
           fetch-depth: 0
       - uses: nrwl/nx-set-shas@v3
+        with:
+          main-branch-name: master
       - name: Make backend envfile
         uses: SpicyPizza/create-envfile@v1.3
         with:
