@@ -4,7 +4,7 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { MongoDbModule, AppConfig } from '@urlshortmono/api/shared';
 import { Url, UrlModule } from '@urlshortmono/api/urlservice/url';
-import { GrpcModule } from "@urlshortmono/api/shared"
+import { GrpcModule } from '@urlshortmono/api/shared';
 
 const AllAppModule = [UrlModule];
 
@@ -15,8 +15,8 @@ const AllAppModule = [UrlModule];
       entities: [Url],
       url: process.env.URL_SERV_MONGOURI,
     }),
-    GrpcModule,
-    ...AllAppModule
+    GrpcModule.forRoot({ name: 'hello', package: '', path: '', url: '' }),
+    ...AllAppModule,
   ],
 })
 export class AppModule {}
