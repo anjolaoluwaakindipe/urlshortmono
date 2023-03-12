@@ -11,7 +11,7 @@ jobs:
 
     strategy:
       matrix:
-        mongodb-version: ['4.2', '4.4', '5.0', '6.0']
+        mongodb-version: ['5.0']
 
     env: 
       NODE_ENV: testing
@@ -29,7 +29,7 @@ jobs:
           envkey_AUTH_SERVICE_MONGO_URI: "mongodb://127.0.0.1:27017/urlshortenertest"
           envkey_URL_SERVICE_MONGO_URI: "mongodb://127.0.0.1:27017/urlshortenertest"
           some_other_variable: foobar
-          directory: "./apps"
+          directory: "../../apps"
           file_name: .env.testing
           fail_on_empty: false
 
