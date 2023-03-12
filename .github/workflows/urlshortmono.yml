@@ -41,7 +41,7 @@ jobs:
           directory: "apps"
           file_name: .env.testing
           fail_on_empty: false
-      - run: npm ci
+      - run: npm ci --force
 
       - run: npx nx format:check
       - run: npx nx affected --target=lint --parallel=3
