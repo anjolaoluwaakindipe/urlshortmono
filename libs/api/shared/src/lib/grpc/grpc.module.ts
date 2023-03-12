@@ -25,7 +25,7 @@ export class GrpcModule {
             options: {
               url: '0.0.0.0:5000',
               package: 'auth',
-              protoPath: join(__dirname, '../../../../libs/data-access/grpc/src/lib/auth.proto'),
+              protoPath: options.path,
             },
           },
         ]),

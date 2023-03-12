@@ -1,4 +1,4 @@
-import "reflect-metadata"
+import 'reflect-metadata';
 import {
   BadRequestException,
   ConflictException,
@@ -16,6 +16,7 @@ import { GrpcModule } from '@urlshortmono/api/shared';
 import { UrlController } from './url.controller';
 import { Url } from './url.entity';
 import { UrlModule } from './url.module';
+import { join } from 'path';
 
 describe('UrlController', () => {
   let controller: UrlController;
@@ -31,7 +32,15 @@ describe('UrlController', () => {
           entities: [Url],
           url: process.env.URL_SERVICE_MONGO_URI || '',
         }),
-        GrpcModule.forRoot({name: "", package: "", path: "", url: ""}),
+        GrpcModule.forRoot({
+          name: '',
+          package: '',
+          path: join(
+            __dirname,
+            '../../../../../data-access/grpc/src/lib/auth.proto'
+          ),
+          url: '',
+        }),
       ],
     }).compile();
 
