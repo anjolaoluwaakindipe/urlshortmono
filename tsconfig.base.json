@@ -14,7 +14,16 @@
     "skipLibCheck": true,
     "skipDefaultLibCheck": true,
     "baseUrl": ".",
-    "paths": {}
+    "paths": {
+      "@urlshortmono/api/authservice/auth": [
+        "libs/api/authservice/auth/src/index.ts"
+      ],
+      "@urlshortmono/api/shared": ["libs/api/shared/src/index.ts"],
+      "@urlshortmono/api/urlservice/url": [
+        "libs/api/urlservice/url/src/index.ts"
+      ],
+      "@urlshortmono/data-access/grpc": ["libs/data-access/grpc/src/index.ts"]
+    }
   },
   "exclude": ["node_modules", "tmp"]
 }

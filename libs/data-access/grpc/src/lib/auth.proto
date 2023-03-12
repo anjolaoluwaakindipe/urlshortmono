@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+package auth;
+
+
+service AuthService{
+    rpc IsValid(IsValidParam) returns (IsValidResponse){}
+}
+
+message IsValidParam {
+    string userId = 1; // user Id
+    repeated string roles = 2; // roles e.g ["admin","user"]
+}
+
+message IsValidResponse {
+    bool isValid = 1;
+}

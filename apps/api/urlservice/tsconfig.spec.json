@@ -9,6 +9,7 @@
     "jest.config.ts",
     "src/**/*.test.ts",
     "src/**/*.spec.ts",
-    "src/**/*.d.ts"
+    "src/**/*.d.ts",
+    "../../../libs/api/urlservice/url/src/lib/url.controller.spec.ts"
   ]
 }
