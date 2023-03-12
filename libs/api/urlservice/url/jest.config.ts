@@ -7,5 +7,4 @@ export default {
   },
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx'],
   coverageDirectory: '../../../../coverage/libs/api/urlservice/url',
-  coverageReporters: ["cobertura", "lcov", "text"],
 };
