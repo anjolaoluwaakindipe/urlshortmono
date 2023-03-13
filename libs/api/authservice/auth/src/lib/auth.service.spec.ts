@@ -1,20 +1,25 @@
 process.env['NODE_ENV'] = 'testing';
 import { ConflictException } from '@nestjs/common';
-import { UnauthorizedException } from '@nestjs/common/exceptions';
+import {
+  BadRequestException,
+  UnauthorizedException,
+} from '@nestjs/common/exceptions';
 import { Test, TestingModule } from '@nestjs/testing';
 import { AppConfig, MongoDbModule } from '@urlshortmono/api/shared';
 import { DataSource } from 'typeorm';
 
-import { User } from './auth.entity';
+import { User, Roles } from './auth.entity';
 import { AuthServiceInterface } from './auth.interface';
 import { AuthServiceImplProvider } from './auth.service';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { JwtModule } from '@nestjs/jwt';
+import { JwtModule, JwtService } from '@nestjs/jwt';
+import { ObjectId } from 'mongodb';
 
 describe('AUTH TESTS', () => {
   let authService: AuthServiceInterface;
   let module: TestingModule;
   let userDataSource: DataSource;
+  let jwtService: JwtService;
 
   beforeEach(async () => {
     module = await Test.createTestingModule({
@@ -32,6 +37,7 @@ describe('AUTH TESTS', () => {
 
     authService = module.get<AuthServiceInterface>(AuthServiceInterface);
     userDataSource = module.get<DataSource>(DataSource);
+    jwtService = module.get<JwtService>(JwtService);
   });
 
   describe('REGISTER TESTS', () => {
@@ -170,37 +176,91 @@ describe('AUTH TESTS', () => {
       await expect(tf()).rejects.toThrow(UnauthorizedException);
     });
   });
-  //   describe('LOGOUT TESTS', () => {
-  //     const user = {
-  //       email: 'anjy@gmail.com',
-  //       username: 'anjy',
-  //       password: 'hello123',
-  //       lastname: 'Akindipe',
-  //       firstname: 'Anjola',
-  //     };
-  //     let userDetails:User;
-  //     let authResponse: {
-  //         accessToken:string,
-  //         refreshToken:string,
-  //     }
-  //     beforeAll(async () => {
-  //       // register
-  //       await authService.register(
-  //         user.email,
-  //         user.username,
-  //         user.password,
-  //         user.lastname,
-  //         user.firstname
-  //       );
-  //      userDetails = await userDataSource.getMongoRepository<User>(User).findOne({where:{email: user.email}})
-  //       // login
-  //       await authService.login(
-  //         user.username,
-  //         user.password
-  //       );
-  //     });
-  //     it('SHOULD PASS when method is triggered', () => {});
-  //   });
+  describe('LOGOUT TESTS', () => {
+    const user = {
+      email: 'anjy@gmail.com',
+      username: 'anjy',
+      password: 'hello123',
+      lastname: 'Akindipe',
+      firstname: 'Anjola',
+    };
+    let userDetails: User;
+    let authResponse: {
+      accessToken: string;
+      refreshToken: string;
+    };
+    beforeEach(async () => {
+      // register
+      await authService.register(
+        user.email,
+        user.username,
+        user.password,
+        user.lastname,
+        user.firstname
+      );
+      userDetails = await userDataSource
+        .getMongoRepository<User>(User)
+        .findOne({ where: { email: user.email } });
+      // login
+      authResponse = await authService.login(user.username, user.password);
+    });
+    it('SHOULD PASS when user logouts with an already existing refresh token', async () => {
+      // check that refresh token from login is in the database
+      expect(userDetails.refreshTokens).toContain(authResponse.refreshToken);
+
+      // logout user
+      await authService.logout(authResponse.refreshToken);
+
+      // check that refresh token from login is not longer in the database
+      const newUserDetails = await userDataSource
+        .getMongoRepository<User>(User)
+        .findOne({ where: { email: user.email } });
+      expect(newUserDetails.refreshTokens).not.toContain(
+        authResponse.refreshToken
+      );
+    });
+    it('SHOULD FAIL when user logouts with an expired refreshtoken', async () => {
+      // check if refresh token from login is in the database
+      expect(userDetails.refreshTokens).toContain(authResponse.refreshToken);
+
+      // wait for 3 seconds
+      await new Promise((resolve) => {
+        setTimeout(resolve, 1000 * 3);
+      });
+
+      // check that refresh token is expired
+      const tf = async () => {
+        await authService.logout(authResponse.refreshToken);
+      };
+      expect(tf()).rejects.toThrow(BadRequestException);
+
+      // chekc that refresh token is no longer in the database after expiration check
+      const newUserDetails = await userDataSource
+        .getMongoRepository<User>(User)
+        .findOne({ where: { email: user.email } });
+      expect(newUserDetails.refreshTokens).not.toContain(
+        authResponse.refreshToken
+      );
+    });
+    it('SHOULD FAIL when user logouts with an refresh token that has an invalid user id', async () => {
+      // generate an invalid user refreshToken
+      const payload = {
+        userId: new ObjectId().toString(),
+        roles = [Roles.User],
+      };
+      const invalidRefreshToken = jwtService.sign(payload, {
+        secret: process.env.REFRESH_SECRET,
+        expiresIn: process.env.REFRESH_DURATION,
+      });
+
+      // check that refresh token is invalid
+      const tf = async () => {
+        await authService.logout(invalidRefreshToken);
+      };
+
+      expect(tf()).rejects.toThrow(BadRequestException);
+    });
+  });
   //   describe('REFRESH TOKEN TESTS', () => {});
   //   describe('FORGOT PASSWORD TEST', () => {});
   //   describe('CHANGE PASSWORD TEST', () => {});

@@ -1,13 +1,17 @@
 export interface AuthServiceInterface {
-  login(emailOrUsername: string, password: string): Promise<loginResponse>;
+  login(
+    emailOrUsername: string,
+    password: string,
+    existingRefreshToken?: string
+  ): Promise<loginResponse>;
   register(
     email: string,
     username: string,
-    password,
+    password: string,
     lastname: string,
     firstname: string
   ): Promise<registerResponse>;
-  logout(email: string): Promise<void>;
+  logout(existingRefreshToken?: string): Promise<void>;
   refresh(token: string, email: string): Promise<refreshResponse>;
   verify(email: string, verifyToken: string): Promise<void>;
   sendVerification(email: string): Promise<void>;

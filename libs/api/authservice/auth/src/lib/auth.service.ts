@@ -18,7 +18,8 @@ class AuthServiceImpl implements AuthServiceInterface {
   ) {}
   async login(
     emailOrUsername: string,
-    password: string
+    password: string,
+    existingRefreshToken?: string
   ): Promise<{
     accessToken: string;
     refreshToken: string;
@@ -46,6 +47,12 @@ class AuthServiceImpl implements AuthServiceInterface {
       },
     });
 
+    const refreshTokens = existingRefreshToken
+      ? existingUser.refreshTokens.filter(
+          (token) => token != existingRefreshToken
+        )
+      : existingUser.refreshTokens;
+
     // check password
     const isPasswordOkay = await bcrypt.compare(
       password,
@@ -64,7 +71,7 @@ class AuthServiceImpl implements AuthServiceInterface {
 
     // update user refresh tokens
     this.userRepository.update(existingUser._id, {
-      refreshTokens: [...existingUser.refreshTokens, refreshToken],
+      refreshTokens: [...refreshTokens, refreshToken],
     });
 
     return {
@@ -152,7 +159,7 @@ class AuthServiceImpl implements AuthServiceInterface {
     return { refreshToken, accessToken };
   }
 
-  logout(email: string): Promise<void> {
+  logout(existingRefreshToken?: string): Promise<void> {
     throw new Error('Method not implemented.');
   }
   refresh(
