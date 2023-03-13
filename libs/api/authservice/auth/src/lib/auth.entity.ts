@@ -1,27 +1,38 @@
-import { ObjectIdColumn, Column, ObjectID } from 'typeorm';
+import { ObjectIdColumn, Column, ObjectID, Entity } from 'typeorm';
+
+export enum Roles {
+  USER = 'USER',
+  ADMIN = 'ADMIN',
+}
+
+@Entity()
 export class User {
-    @ObjectIdColumn()
-    _id: ObjectID;
+  @ObjectIdColumn()
+  _id: ObjectID;
 
-    @Column({unique:true})
-    email:string;
-    @Column({unique: true})
-    username:string;
-    @Column()
-    firstname:string;
-    @Column()
-    lastname:string;
-    @Column()
-    password:string;
-    @Column({default: false})
-    verified:boolean;
+  @Column({ unique: true })
+  email: string;
+  @Column({ unique: true })
+  username: string;
+  @Column()
+  firstname: string;
+  @Column()
+  lastname: string;
+  @Column()
+  password: string;
 
-    @Column({array: true})
-    refreshTokens:string[]
+  @Column({ type: 'enum', enum: Roles, array: true, default: [Roles.USER] })
+  roles: Roles[];
 
-    @Column({unique:true})
-    verificationTokens:string
+  @Column({ default: false })
+  verified: boolean;
 
-    @Column({unique:true})
-    forgetPasswordToken:string
+  @Column({ array: true, type: 'array', default:[] })
+  refreshTokens: string[];
+
+  @Column({ unique: true })
+  verificationTokens: string;
+
+  @Column({ unique: true })
+  forgetPasswordToken: string;
 }
