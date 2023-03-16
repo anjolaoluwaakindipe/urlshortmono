@@ -21,8 +21,8 @@ export class User {
   @Column()
   password: string;
 
-  @Column({ type: 'enum', enum: Roles, array: true, default: [Roles.USER] })
-  roles: Roles[];
+  @Column({ type: 'enum', enum: Roles, array: true, default: [Roles[Roles.USER]] })
+  roles: Roles[] = [Roles.USER];
 
   @Column({ default: false })
   verified: boolean;

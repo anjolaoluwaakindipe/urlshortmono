@@ -126,8 +126,8 @@ class AuthServiceImpl implements AuthServiceInterface {
       lastname,
       password: passwordHash,
       refreshTokens: [],
-      roles: [],
     });
+
 
     // create tokens
     const { refreshToken, accessToken } =  await this.createAuthTokens(
@@ -176,6 +176,7 @@ class AuthServiceImpl implements AuthServiceInterface {
       roles: string;
     };
 
+
     if(!ObjectId.isValid(payload.userId)){
       throw new UnauthorizedException("Invalid refresh token")
     }
@@ -187,6 +188,7 @@ class AuthServiceImpl implements AuthServiceInterface {
         ) as unknown as ObjectID,
       },
     });
+
 
     if (!existingUser) {
       throw new UnauthorizedException('Invalid refreshToken');
@@ -210,8 +212,6 @@ class AuthServiceImpl implements AuthServiceInterface {
     const removedTokens = existingUser.refreshTokens.filter(
       (token) => token !== existingRefreshToken
     );
-
-    console.log(removedTokens);
 
     // update user after
     await this.userRepository.update(existingUser._id.toString(), {

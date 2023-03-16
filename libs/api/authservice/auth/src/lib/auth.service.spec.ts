@@ -253,6 +253,8 @@ describe('AUTH TESTS', () => {
         secret: process.env.REFRESH_SECRET,
         expiresIn: process.env.REFRESH_DURATION,
       });
+      
+    
 
       // check that refresh token is invalid
       const tf = async () => {
