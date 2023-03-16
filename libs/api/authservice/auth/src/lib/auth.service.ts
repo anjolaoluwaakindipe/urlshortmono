@@ -1,13 +1,17 @@
 import { ConflictException, Injectable } from '@nestjs/common';
-import { UnauthorizedException } from '@nestjs/common/exceptions';
+import {
+  BadRequestException,
+  UnauthorizedException,
+} from '@nestjs/common/exceptions';
 import { Provider } from '@nestjs/common/interfaces/modules';
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
 import * as bcrypt from 'bcrypt';
-import { Repository } from 'typeorm';
+import { ObjectID, Repository } from 'typeorm';
 
 import { Roles, User } from './auth.entity';
 import { AuthServiceInterface } from './auth.interface';
+import { ObjectId } from 'mongodb';
 
 @Injectable()
 class AuthServiceImpl implements AuthServiceInterface {
@@ -49,7 +53,7 @@ class AuthServiceImpl implements AuthServiceInterface {
 
     const refreshTokens = existingRefreshToken
       ? existingUser.refreshTokens.filter(
-          (token) => token != existingRefreshToken
+          (token) => token !== existingRefreshToken
         )
       : existingUser.refreshTokens;
 
@@ -64,7 +68,7 @@ class AuthServiceImpl implements AuthServiceInterface {
     }
 
     // create tokens
-    const { accessToken, refreshToken } = this.createAuthTokens(
+    const { accessToken, refreshToken } = await this.createAuthTokens(
       existingUser._id.toString(),
       existingUser.roles
     );
@@ -126,15 +130,18 @@ class AuthServiceImpl implements AuthServiceInterface {
     });
 
     // create tokens
-    const { refreshToken, accessToken } = this.createAuthTokens(
+    const { refreshToken, accessToken } =  await this.createAuthTokens(
       createdUser._id.toString(),
       createdUser.roles
     );
 
     // update user with refresh token
-    await this.userRepository.update(createdUser._id, {
-      refreshTokens: [...createdUser.refreshTokens, refreshToken],
-    });
+    await this.userRepository.update(
+      { _id: createdUser._id },
+      {
+        refreshTokens: [...createdUser.refreshTokens, refreshToken],
+      }
+    );
     // send verification token to email
 
     return {
@@ -146,21 +153,71 @@ class AuthServiceImpl implements AuthServiceInterface {
       lastname: createdUser.lastname,
     };
   }
-  private createAuthTokens(userId: string, roles: Roles[]) {
+  private async createAuthTokens(userId: string, roles: Roles[]) {
     const payload = { userId: userId, roles: roles };
     const accessToken = this.jwtService.sign(payload, {
       secret: process.env.ACCESS_SECRET,
+      algorithm: 'HS256',
       expiresIn: process.env.ACCESS_DURATION,
     });
-    const refreshToken = this.jwtService.sign(payload, {
+    const refreshToken = await this.jwtService.signAsync( payload, {
       secret: process.env.REFRESH_SECRET,
+      algorithm: 'HS256',
       expiresIn: process.env.REFRESH_DURATION,
     });
     return { refreshToken, accessToken };
   }
 
-  logout(existingRefreshToken?: string): Promise<void> {
-    throw new Error('Method not implemented.');
+  async logout(existingRefreshToken?: string): Promise<void> {
+
+    // check payload for userId and roles
+    const payload = this.jwtService.decode(existingRefreshToken) as {
+      userId: string;
+      roles: string;
+    };
+
+    if(!ObjectId.isValid(payload.userId)){
+      throw new UnauthorizedException("Invalid refresh token")
+    }
+    // check if userId exists in the database
+    const existingUser = await this.userRepository.findOne({
+      where: {
+        _id: ObjectId.createFromHexString(
+          payload.userId
+        ) as unknown as ObjectID,
+      },
+    });
+
+    if (!existingUser) {
+      throw new UnauthorizedException('Invalid refreshToken');
+    }
+
+    // find if existing refresh token exists in user's field
+    const existingToken = existingUser.refreshTokens.find(
+      (token) => token === existingRefreshToken
+    );
+
+    // if not, user is hacked and delete all tokens generated
+    if (!existingToken) {
+      await this.userRepository.update(
+        { _id: existingUser._id },
+        { refreshTokens: [] }
+      );
+      throw new UnauthorizedException('Invalid refreshToken');
+    }
+
+    // if not remove existing refresh token
+    const removedTokens = existingUser.refreshTokens.filter(
+      (token) => token !== existingRefreshToken
+    );
+
+    console.log(removedTokens);
+
+    // update user after
+    await this.userRepository.update(existingUser._id.toString(), {
+      refreshTokens: removedTokens,
+    });
+
   }
   refresh(
     token: string,

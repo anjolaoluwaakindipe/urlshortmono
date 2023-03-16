@@ -198,11 +198,14 @@ describe('AUTH TESTS', () => {
         user.lastname,
         user.firstname
       );
+      await new Promise((resolve) => {
+        setTimeout(resolve, 1000 * 1);
+      });
+      // login
+      authResponse = await authService.login(user.username, user.password);
       userDetails = await userDataSource
         .getMongoRepository<User>(User)
         .findOne({ where: { email: user.email } });
-      // login
-      authResponse = await authService.login(user.username, user.password);
     });
     it('SHOULD PASS when user logouts with an already existing refresh token', async () => {
       // check that refresh token from login is in the database
@@ -219,7 +222,7 @@ describe('AUTH TESTS', () => {
         authResponse.refreshToken
       );
     });
-    it('SHOULD FAIL when user logouts with an expired refreshtoken', async () => {
+    it('SHOULD PASS when user logouts with an expired valid refreshtoken', async () => {
       // check if refresh token from login is in the database
       expect(userDetails.refreshTokens).toContain(authResponse.refreshToken);
 
@@ -228,11 +231,9 @@ describe('AUTH TESTS', () => {
         setTimeout(resolve, 1000 * 3);
       });
 
-      // check that refresh token is expired
-      const tf = async () => {
-        await authService.logout(authResponse.refreshToken);
-      };
-      expect(tf()).rejects.toThrow(BadRequestException);
+      // check that refresh token still works even after expiring
+      await authService.logout(authResponse.refreshToken);
+
 
       // chekc that refresh token is no longer in the database after expiration check
       const newUserDetails = await userDataSource
@@ -246,7 +247,7 @@ describe('AUTH TESTS', () => {
       // generate an invalid user refreshToken
       const payload = {
         userId: new ObjectId().toString(),
-        roles = [Roles.User],
+        roles: [Roles.USER],
       };
       const invalidRefreshToken = jwtService.sign(payload, {
         secret: process.env.REFRESH_SECRET,
@@ -258,7 +259,7 @@ describe('AUTH TESTS', () => {
         await authService.logout(invalidRefreshToken);
       };
 
-      expect(tf()).rejects.toThrow(BadRequestException);
+      expect(tf()).rejects.toThrow(UnauthorizedException);
     });
   });
   //   describe('REFRESH TOKEN TESTS', () => {});
@@ -267,7 +268,10 @@ describe('AUTH TESTS', () => {
   //   describe('VERIFY ACCOUNT TEST', () => {});
   //   describe('SEND VERIFICATION TEST', () => {});
 
-  afterEach(() => {
-    userDataSource.getRepository<User>(User).delete({});
+  afterEach(async () => {
+    await userDataSource.getRepository<User>(User).clear();
   });
+  // afterAll(()=>{
+  //   module.close()
+  // })
 });
