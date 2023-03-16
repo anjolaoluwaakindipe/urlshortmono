@@ -125,6 +125,7 @@ class AuthServiceImpl implements AuthServiceInterface {
       firstname,
       lastname,
       password: passwordHash,
+      refreshTokens: [],
     });
 
 
