@@ -4,6 +4,8 @@ on:
     branches:
       - master
   pull_request:
+    branches:
+      - master
 
 jobs:
   main:
@@ -13,9 +15,9 @@ jobs:
       matrix:
         mongodb-version: ['5.0']
 
-    env: 
+    env:
       NODE_ENV: testing
-    
+
     steps:
       - name: Start MongoDB
         uses: supercharge/mongodb-github-action@1.8.0
@@ -23,7 +25,6 @@ jobs:
           mongodb-version: ${{ matrix.mongodb-version }}
 
       - run: ls -al
-  
 
       - uses: actions/checkout@v2
         with:
@@ -34,11 +35,11 @@ jobs:
       - name: Make backend envfile
         uses: SpicyPizza/create-envfile@v1.3
         with:
-          envkey_NODE_ENV: "testing" 
-          envkey_AUTH_SERVICE_MONGO_URI: "mongodb://127.0.0.1:27017/urlshortenertest"
-          envkey_URL_SERVICE_MONGO_URI: "mongodb://127.0.0.1:27017/urlshortenertest"
+          envkey_NODE_ENV: 'testing'
+          envkey_AUTH_SERVICE_MONGO_URI: 'mongodb://127.0.0.1:27017/urlshortenertest'
+          envkey_URL_SERVICE_MONGO_URI: 'mongodb://127.0.0.1:27017/urlshortenertest'
           some_other_variable: foobar
-          directory: "apps"
+          directory: 'apps'
           file_name: .env.testing
           fail_on_empty: false
       - run: npm ci --force
