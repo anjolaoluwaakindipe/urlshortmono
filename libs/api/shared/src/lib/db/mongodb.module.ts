@@ -23,7 +23,7 @@ export class MongoDbModule {
               ? true
               : false,
           entities: options.entities,
-          
+           
         }),
       ],
       exports: [TypeOrmModule],
