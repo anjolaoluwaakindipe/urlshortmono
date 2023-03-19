@@ -234,7 +234,6 @@ describe('AUTH TESTS', () => {
       // check that refresh token still works even after expiring
       await authService.logout(authResponse.refreshToken);
 
-
       // chekc that refresh token is no longer in the database after expiration check
       const newUserDetails = await userDataSource
         .getMongoRepository<User>(User)
@@ -253,8 +252,6 @@ describe('AUTH TESTS', () => {
         secret: process.env.REFRESH_SECRET,
         expiresIn: process.env.REFRESH_DURATION,
       });
-      
-    
 
       // check that refresh token is invalid
       const tf = async () => {
@@ -264,14 +261,45 @@ describe('AUTH TESTS', () => {
       expect(tf()).rejects.toThrow(UnauthorizedException);
     });
   });
-  //   describe('REFRESH TOKEN TESTS', () => {});
-  //   describe('FORGOT PASSWORD TEST', () => {});
-  //   describe('CHANGE PASSWORD TEST', () => {});
-  //   describe('VERIFY ACCOUNT TEST', () => {});
-  //   describe('SEND VERIFICATION TEST', () => {});
+  describe('REFRESH TOKEN TESTS', () => {
+    it('NOT IMPLEMENTED YET', async () => {
+      const tf = async () => {
+        await authService.refresh('test', 'test');
+      };
+
+      await expect(tf).rejects.toThrow(Error);
+    });
+  });
+  describe('FORGOT PASSWORD TEST', () => {
+    it('NOT IMPLEMENTED YET', async () => {
+      const tf = async () => {
+        await authService.forgotPassword('test');
+      };
+
+      await expect(tf).rejects.toThrow(Error);
+    });
+  });
+  describe('CHANGE PASSWORD TEST', () => {
+    it('NOT IMPLEMENTED YET', async () => {
+      const tf = async () => {
+        await authService.changePassword('test', 'test');
+      };
+
+      await expect(tf).rejects.toThrow(Error);
+    });
+  });
+  describe('VERIFY ACCOUNT TEST', () => {
+    it('NOT IMPLEMENTED YET', async () => {
+      const tf = async () => {
+        await authService.verify('test', 'test');
+      };
+
+      await expect(tf).rejects.toThrow(Error);
+    });
+  });
 
   afterEach(async () => {
-    await userDataSource.getRepository<User>(User).clear();
+    await userDataSource.getRepository<User>(User).delete({});
   });
   // afterAll(()=>{
   //   module.close()

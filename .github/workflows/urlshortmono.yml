@@ -36,8 +36,14 @@ jobs:
         uses: SpicyPizza/create-envfile@v1.3
         with:
           envkey_NODE_ENV: 'testing'
+          envkey_ACCESS_SECRET: 'asdfkjhsafkjahsdfkahsdkfjfaskjdkfsafh'
+          envkey_ACCESS_DURATION: '2s'
+          envkey_REFRESH_SECRET: 'sjfahlksldfahsdkflhasdfhsflflaskdfhal'
+          envkey_REFRESH_DURATION: '3s'
           envkey_AUTH_SERVICE_MONGO_URI: 'mongodb://127.0.0.1:27017/urlshortenertest'
+          envkey_AUTH_SERVICE_PORT: '4000'
           envkey_URL_SERVICE_MONGO_URI: 'mongodb://127.0.0.1:27017/urlshortenertest'
+          envkey_URL_SERVICE_MONGO_PORT: '4001'
           some_other_variable: foobar
           directory: 'apps'
           file_name: .env.testing
@@ -46,6 +52,6 @@ jobs:
 
       # - run: npx nx format:check
       - run: npx nx affected --target=lint --parallel=3
-      - run: npx nx affected --target=test --parallel=3 --configuration=ci
+      - run: npx nx run-many --target=test --parallel=3 --configuration=ci
       - run: npx nx affected --target=e2e --parrallel=3 --configuration=ci
       - run: npx nx affected --target=build --parallel=3
