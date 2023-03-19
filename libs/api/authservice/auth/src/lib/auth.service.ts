@@ -225,16 +225,16 @@ class AuthServiceImpl implements AuthServiceInterface {
   ): Promise<{ accessToken: string; refresToken: string }> {
     throw new Error('Method not implemented.');
   }
-  verify(email: string, verifyToken: string): Promise<void> {
+  async verify(email: string, verifyToken: string): Promise<void> {
     throw new Error('Method not implemented.');
   }
-  sendVerification(email: string): Promise<void> {
+  async sendVerification(email: string): Promise<void> {
     throw new Error('Method not implemented.');
   }
-  forgotPassword(email: string): Promise<void> {
+  async forgotPassword(email: string): Promise<void> {
     throw new Error('Method not implemented.');
   }
-  changePassword(email: string, token: string): Promise<void> {
+  async changePassword(email: string, token: string): Promise<void> {
     throw new Error('Method not implemented.');
   }
 }
