@@ -5,7 +5,7 @@ import { Transport } from '@nestjs/microservices/enums';
 
 type GrpcModuleOptions = {
   name: string;
-  url: string;
+  port: string;
   package: string;
   path: string;
 };
@@ -15,7 +15,7 @@ type GrpcModuleOptions = {
 export class GrpcModule {
   static forRoot(options: GrpcModuleOptions): DynamicModule {
     return {
-      global:true,
+      global: true,
       module: GrpcModule,
       imports: [
         ClientsModule.register([
@@ -23,7 +23,7 @@ export class GrpcModule {
             name: 'AUTH_PACKAGE',
             transport: Transport.GRPC,
             options: {
-              url: '0.0.0.0:5000',
+              url: '0.0.0.0:'+options.port,
               package: 'auth',
               protoPath: options.path,
             },
