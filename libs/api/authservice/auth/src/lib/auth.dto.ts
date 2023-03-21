@@ -53,3 +53,8 @@ export type LoginResponseDto = {
     lastname:string;
     email:string;
 }
+
+// logout dto
+export class LogoutRequestDto{
+    refreshToken?:string;
+}

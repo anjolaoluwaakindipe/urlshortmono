@@ -7,6 +7,8 @@ import {
   Get,
   Res,
   BadRequestException,
+  HttpStatus,
+  HttpCode,
 } from '@nestjs/common';
 import { AuthService } from '@urlshortmono/data-access/grpc';
 import { AuthServiceInterface, LoginResponse } from './auth.interface';
@@ -17,6 +19,9 @@ import {
   LoginResponseDto,
 } from './auth.dto';
 import { Response, Request } from 'express';
+import { LogoutRequestDto } from './auth.dto';
+import { JwtAuthGaurd } from '@urlshortmono/api/shared';
+import { UseGuards } from '@nestjs/common';
 
 @Controller('/auth')
 export class AuthController {
@@ -45,7 +50,7 @@ export class AuthController {
         ...response,
       };
     }
-    res.cookie('refreshToken', response.accessToken, { httpOnly: true });
+    res.cookie('refreshToken', response.refreshToken, { httpOnly: true });
     return {
       accessToken: response.accessToken,
       username: response.username,
@@ -56,6 +61,7 @@ export class AuthController {
   }
 
   @Post('/login')
+  @HttpCode(HttpStatus.OK)
   async loginUser(
     @Req() req: Request,
     @Body() requestBody: LoginRequestDto,
@@ -88,8 +94,26 @@ export class AuthController {
     }
   }
 
-  @Get("/logout")
-  async logoutUser(@Req() req:Request):Promise<void>{
-    return
+  @Get('/logout')
+  async logoutUser(
+    @Req() req: Request,
+    @Body() requestBody: LogoutRequestDto,
+    @Res({ passthrough: true }) res: Response
+  ): Promise<void> {
+    if (req.header('X-CLIENT') && req.header('X-CLIENT') == 'mobile') {
+      await this.authService.logout(requestBody.refreshToken);
+    } else {
+      await this.authService.logout(req.cookies['refreshToken']);
+      res.cookie('refreshToken', '', { expires: new Date() });
+    }
+    return;
+  }
+
+  @Get('/verification-link')
+  @UseGuards(JwtAuthGaurd)
+  async sendVerification(
+    @Req() req: Request & { user: { userId: string; roles: any } }
+  ) {
+    this.authService.sendVerification(req.user.userId)
   }
 }
