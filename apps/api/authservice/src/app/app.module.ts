@@ -1,14 +1,9 @@
 import { Module } from '@nestjs/common';
 
-import { AuthModule } from '@urlshortmono/api/authservice/auth';
-import { AppConfig } from '@urlshortmono/api/shared';
-import { GrpcModule } from '@urlshortmono/api/shared';
-import { EmailModule } from '@urlshortmono/api/shared';
-import { MongoDbModule } from '@urlshortmono/api/shared';
-import { User } from '@urlshortmono/api/authservice/auth';
+import { PassportModule } from '@nestjs/passport';
+import { AuthModule, User } from '@urlshortmono/api/authservice/auth';
+import { AppConfig, EmailModule, GrpcModule, MongoDbModule } from '@urlshortmono/api/shared';
 import { join } from 'path';
-import { TypeOrmModule } from '@nestjs/typeorm';
-import { JwtModule } from '@nestjs/jwt';
 
 @Module({
   imports: [
@@ -22,6 +17,7 @@ import { JwtModule } from '@nestjs/jwt';
       ),
       port: process.env.AUTH_SERVIC_GRPC_PORT,
     }),
+    PassportModule,
     EmailModule.forRoot({ transportUrl: 'asdfasdf' }),
     MongoDbModule.forRoot({
       entities: [User],

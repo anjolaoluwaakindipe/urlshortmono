@@ -14,7 +14,7 @@ export interface AuthServiceInterface {
   logout(existingRefreshToken?: string): Promise<void>;
   refresh(token: string, email: string): Promise<refreshResponse>;
   verify(email: string, verifyToken: string): Promise<void>;
-  sendVerification(email: string, userId:string): Promise<string>;
+  sendVerification(userId:string): Promise<string>;
   forgotPassword(email: string): Promise<void>;
   changePassword(email: string, token: string): Promise<void>;
 }

@@ -138,7 +138,7 @@ class AuthServiceImpl implements AuthServiceInterface {
 
     const [tokens, verificationToken] = await Promise.all([
       this.createAuthTokens(createdUser._id.toString(), createdUser.roles),
-      this.sendVerification(email, createdUser._id.toString()),
+      this.sendVerificationLink(email, createdUser._id.toString()),
     ]);
 
     // update user with refresh token
@@ -179,6 +179,10 @@ class AuthServiceImpl implements AuthServiceInterface {
   }
 
   async logout(existingRefreshToken?: string): Promise<void> {
+    if (!existingRefreshToken) {
+      return;
+    }
+
     // check payload for userId and roles
     const payload = this.jwtService.decode(existingRefreshToken) as {
       userId: string;
@@ -221,9 +225,12 @@ class AuthServiceImpl implements AuthServiceInterface {
     );
 
     // update user after
-    await this.userRepository.update(existingUser._id.toString(), {
-      refreshTokens: removedTokens,
-    });
+    await this.userRepository.update(
+      { _id: existingUser._id },
+      {
+        refreshTokens: removedTokens,
+      }
+    );
   }
   refresh(
     token: string,
@@ -234,12 +241,29 @@ class AuthServiceImpl implements AuthServiceInterface {
   async verify(email: string, verifyToken: string): Promise<void> {
     throw new Error('Method not implemented.');
   }
-  async sendVerification(email: string, userId: string): Promise<string> {
+  private async sendVerificationLink(email:string, userId:string):Promise<string>{
+
     const token: string = await this.emailService.sendVerificationToken(
       userId,
       email
     );
     return token;
+  }
+  async sendVerification(userId:string): Promise<string> {
+    if(!ObjectId.isValid(userId)){
+      throw new BadRequestException("Invalid access token")
+    }
+
+    const existingUser = await this.userRepository.findOne({where:{_id: ObjectId.createFromHexString(userId) as unknown as ObjectID}})
+
+    if (!existingUser){
+      throw new BadRequestException("Invalid access token")
+    }
+    if(existingUser.verified){
+      return
+    }
+    return await this.sendVerificationLink(existingUser.email, userId)
+
   }
   async forgotPassword(email: string): Promise<void> {
     throw new Error('Method not implemented.');
