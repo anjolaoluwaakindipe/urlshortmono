@@ -16,7 +16,7 @@ const AllAppModule = [UrlModule];
       entities: [Url],
       url: process.env.URL_SERV_MONGOURI,
     }),
-    GrpcModule.forRoot({ name: 'AUTH_PACKAGE', package: 'auth', path: join(__dirname, "../../../../libs/data-access/grpc/src/lib/auth.proto"), port: "5001" }),
+    GrpcModule.forRoot({ name: 'hello', package: '', path: join(__dirname, "../../../../libs/data-access/grpc/src/lib/auth.proto"), url: '' }),
     ...AllAppModule,
   ],
 })
