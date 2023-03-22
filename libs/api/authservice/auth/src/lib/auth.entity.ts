@@ -21,18 +21,23 @@ export class User {
   @Column()
   password: string;
 
-  @Column({ type: 'enum', enum: Roles, array: true, default: [Roles[Roles.USER]] })
+  @Column({
+    type: 'enum',
+    enum: Roles,
+    array: true,
+    default: [Roles[Roles.USER]],
+  })
   roles: Roles[] = [Roles.USER];
 
   @Column({ default: false })
   verified: boolean;
 
-  @Column({ array: true, type: 'array', default:[] })
+  @Column({ array: true, type: 'array', default: [] })
   refreshTokens: string[];
 
   @Column({ unique: true })
   verificationTokens: string;
 
-  @Column({ unique: true })
+  @Column()
   forgetPasswordToken: string;
 }

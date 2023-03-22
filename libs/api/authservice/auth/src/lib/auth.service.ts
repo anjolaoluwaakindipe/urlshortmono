@@ -1,4 +1,4 @@
-import { ConflictException, Injectable } from '@nestjs/common';
+import { ConflictException, Inject, Injectable } from '@nestjs/common';
 import {
   BadRequestException,
   UnauthorizedException,
@@ -12,13 +12,17 @@ import { ObjectID, Repository } from 'typeorm';
 import { Roles, User } from './auth.entity';
 import { AuthServiceInterface } from './auth.interface';
 import { ObjectId } from 'mongodb';
+import { EmailServiceInterface } from './email.interface';
+import { InternalServerErrorException } from '@nestjs/common/exceptions';
 
 @Injectable()
 class AuthServiceImpl implements AuthServiceInterface {
   constructor(
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
-    private jwtService: JwtService
+    private readonly jwtService: JwtService,
+    @Inject(EmailServiceInterface)
+    private readonly emailService: EmailServiceInterface
   ) {}
   async login(
     emailOrUsername: string,
@@ -128,25 +132,31 @@ class AuthServiceImpl implements AuthServiceInterface {
       refreshTokens: [],
     });
 
+    // let tokens: { refreshToken: string; accessToken: string };
 
-    // create tokens
-    const { refreshToken, accessToken } =  await this.createAuthTokens(
-      createdUser._id.toString(),
-      createdUser.roles
-    );
+    // let verificationToken: string;
+
+    const [tokens, verificationToken] = await Promise.all([
+      this.createAuthTokens(createdUser._id.toString(), createdUser.roles),
+      this.sendVerificationLink(email, createdUser._id.toString()),
+    ]);
 
     // update user with refresh token
     await this.userRepository.update(
       { _id: createdUser._id },
       {
-        refreshTokens: [...createdUser.refreshTokens, refreshToken],
+        refreshTokens: [
+          ...createdUser.refreshTokens,
+          ...(tokens.refreshToken ? [tokens.refreshToken] : []),
+        ],
+        verificationTokens: verificationToken || '',
       }
     );
     // send verification token to email
 
     return {
-      accessToken: accessToken,
-      refreshToken: refreshToken,
+      accessToken: tokens.accessToken,
+      refreshToken: tokens.refreshToken,
       email: createdUser.email,
       firstname: createdUser.firstname,
       username: createdUser.username,
@@ -160,7 +170,7 @@ class AuthServiceImpl implements AuthServiceInterface {
       algorithm: 'HS256',
       expiresIn: process.env.ACCESS_DURATION,
     });
-    const refreshToken = await this.jwtService.signAsync( payload, {
+    const refreshToken = await this.jwtService.signAsync(payload, {
       secret: process.env.REFRESH_SECRET,
       algorithm: 'HS256',
       expiresIn: process.env.REFRESH_DURATION,
@@ -169,6 +179,9 @@ class AuthServiceImpl implements AuthServiceInterface {
   }
 
   async logout(existingRefreshToken?: string): Promise<void> {
+    if (!existingRefreshToken) {
+      return;
+    }
 
     // check payload for userId and roles
     const payload = this.jwtService.decode(existingRefreshToken) as {
@@ -176,9 +189,12 @@ class AuthServiceImpl implements AuthServiceInterface {
       roles: string;
     };
 
-
-    if(!ObjectId.isValid(payload.userId)){
+    if(!payload){
       throw new UnauthorizedException("Invalid refresh token")
+    }
+
+    if (!ObjectId.isValid(payload.userId)) {
+      throw new UnauthorizedException('Invalid refresh token');
     }
     // check if userId exists in the database
     const existingUser = await this.userRepository.findOne({
@@ -188,7 +204,6 @@ class AuthServiceImpl implements AuthServiceInterface {
         ) as unknown as ObjectID,
       },
     });
-
 
     if (!existingUser) {
       throw new UnauthorizedException('Invalid refreshToken');
@@ -214,10 +229,12 @@ class AuthServiceImpl implements AuthServiceInterface {
     );
 
     // update user after
-    await this.userRepository.update(existingUser._id.toString(), {
-      refreshTokens: removedTokens,
-    });
-
+    await this.userRepository.update(
+      { _id: existingUser._id },
+      {
+        refreshTokens: removedTokens,
+      }
+    );
   }
   refresh(
     token: string,
@@ -228,8 +245,32 @@ class AuthServiceImpl implements AuthServiceInterface {
   async verify(email: string, verifyToken: string): Promise<void> {
     throw new Error('Method not implemented.');
   }
-  async sendVerification(email: string): Promise<void> {
-    throw new Error('Method not implemented.');
+  private async sendVerificationLink(email:string, userId:string):Promise<string>{
+
+    const token: string = await this.emailService.sendVerificationToken(
+      userId,
+      email
+    );
+    return token;
+  }
+  async sendVerification(userId:string): Promise<string> {
+    if(!ObjectId.isValid(userId)){
+      throw new BadRequestException("Invalid access token")
+    }
+
+    const existingUser = await this.userRepository.findOne({where:{_id: ObjectId.createFromHexString(userId) as unknown as ObjectID}})
+
+    if (!existingUser){
+      throw new BadRequestException("Invalid access token")
+    }
+    if(existingUser.verified){
+      await this.userRepository.update({_id: existingUser._id}, {verificationTokens: ""})
+      return
+    }
+    const verificationToken = await this.sendVerificationLink(existingUser.email, userId)
+
+    await this.userRepository.update({_id: ObjectId.createFromHexString(userId) as unknown as ObjectID}, {verificationTokens: verificationToken});
+    return verificationToken;
   }
   async forgotPassword(email: string): Promise<void> {
     throw new Error('Method not implemented.');

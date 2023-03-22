@@ -3,25 +3,25 @@ export interface AuthServiceInterface {
     emailOrUsername: string,
     password: string,
     existingRefreshToken?: string
-  ): Promise<loginResponse>;
+  ): Promise<LoginResponse>;
   register(
     email: string,
     username: string,
     password: string,
     lastname: string,
     firstname: string
-  ): Promise<registerResponse>;
+  ): Promise<RegisterResponse>;
   logout(existingRefreshToken?: string): Promise<void>;
   refresh(token: string, email: string): Promise<refreshResponse>;
   verify(email: string, verifyToken: string): Promise<void>;
-  sendVerification(email: string): Promise<void>;
+  sendVerification(userId:string): Promise<string>;
   forgotPassword(email: string): Promise<void>;
   changePassword(email: string, token: string): Promise<void>;
 }
 
 export const AuthServiceInterface = 'AuthServiceInterface';
 
-type loginResponse = {
+export type LoginResponse = {
   accessToken: string;
   refreshToken: string;
   email: string;
@@ -30,7 +30,7 @@ type loginResponse = {
   lastname: string;
 };
 
-type registerResponse = loginResponse;
+type RegisterResponse = LoginResponse;
 
 type refreshResponse = {
   accessToken: string;
