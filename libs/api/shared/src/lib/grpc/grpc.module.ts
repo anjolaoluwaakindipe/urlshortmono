@@ -24,8 +24,8 @@ export class GrpcModule {
             transport: Transport.GRPC,
             options: {
               url: '0.0.0.0:'+options.port,
-              package: 'auth',
               protoPath: options.path,
+              package: 'auth',
             },
           },
         ]),

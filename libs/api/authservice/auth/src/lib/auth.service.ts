@@ -189,6 +189,10 @@ class AuthServiceImpl implements AuthServiceInterface {
       roles: string;
     };
 
+    if(!payload){
+      throw new UnauthorizedException("Invalid refresh token")
+    }
+
     if (!ObjectId.isValid(payload.userId)) {
       throw new UnauthorizedException('Invalid refresh token');
     }
@@ -260,10 +264,13 @@ class AuthServiceImpl implements AuthServiceInterface {
       throw new BadRequestException("Invalid access token")
     }
     if(existingUser.verified){
+      await this.userRepository.update({_id: existingUser._id}, {verificationTokens: ""})
       return
     }
-    return await this.sendVerificationLink(existingUser.email, userId)
+    const verificationToken = await this.sendVerificationLink(existingUser.email, userId)
 
+    await this.userRepository.update({_id: ObjectId.createFromHexString(userId) as unknown as ObjectID}, {verificationTokens: verificationToken});
+    return verificationToken;
   }
   async forgotPassword(email: string): Promise<void> {
     throw new Error('Method not implemented.');

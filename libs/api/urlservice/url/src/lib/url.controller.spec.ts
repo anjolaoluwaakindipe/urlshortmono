@@ -40,7 +40,7 @@ describe('UrlController', () => {
             __dirname,
             '../../../../../data-access/grpc/src/lib/auth.proto'
           ),
-          url: '',
+          port: "5000",
         }),
       ],
     }).compile();
