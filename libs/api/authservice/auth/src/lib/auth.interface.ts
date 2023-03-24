@@ -13,7 +13,7 @@ export interface AuthServiceInterface {
   ): Promise<RegisterResponse>;
   logout(existingRefreshToken?: string): Promise<void>;
   refresh(token: string, email: string): Promise<refreshResponse>;
-  verify(email: string, verifyToken: string): Promise<void>;
+  verify(verifyToken: string): Promise<void>;
   sendVerification(userId:string): Promise<string>;
   forgotPassword(email: string): Promise<void>;
   changePassword(email: string, token: string): Promise<void>;

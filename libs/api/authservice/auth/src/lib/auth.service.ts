@@ -189,8 +189,8 @@ class AuthServiceImpl implements AuthServiceInterface {
       roles: string;
     };
 
-    if(!payload){
-      throw new UnauthorizedException("Invalid refresh token")
+    if (!payload) {
+      throw new UnauthorizedException('Invalid refresh token');
     }
 
     if (!ObjectId.isValid(payload.userId)) {
@@ -242,34 +242,66 @@ class AuthServiceImpl implements AuthServiceInterface {
   ): Promise<{ accessToken: string; refresToken: string }> {
     throw new Error('Method not implemented.');
   }
-  async verify(email: string, verifyToken: string): Promise<void> {
-    throw new Error('Method not implemented.');
-  }
-  private async sendVerificationLink(email:string, userId:string):Promise<string>{
+  async verify( verifyToken: string): Promise<void> {
+    const payload = this.jwtService.decode(verifyToken) as { userId: string };
 
+    if (!payload)
+      throw new UnauthorizedException('Invalid verification token');
+  
+
+    if (!ObjectId.isValid(payload.userId))
+      throw new UnauthorizedException('Invalid verification token');
+
+    
+
+    const existingUser = await this.userRepository.findOne({
+      where: {_id:ObjectId.createFromHexString(payload.userId) as unknown as ObjectID ,verificationTokens: verifyToken },
+    });
+
+    if (!existingUser) throw new UnauthorizedException("Invalid verification token")
+
+    await this.userRepository.update({_id: existingUser._id}, {verified: true, verificationTokens: ""})
+  }
+  private async sendVerificationLink(
+    email: string,
+    userId: string
+  ): Promise<string> {
     const token: string = await this.emailService.sendVerificationToken(
       userId,
       email
     );
     return token;
   }
-  async sendVerification(userId:string): Promise<string> {
-    if(!ObjectId.isValid(userId)){
-      throw new BadRequestException("Invalid access token")
+  async sendVerification(userId: string): Promise<string> {
+    if (!ObjectId.isValid(userId)) {
+      throw new BadRequestException('Invalid access token');
     }
 
-    const existingUser = await this.userRepository.findOne({where:{_id: ObjectId.createFromHexString(userId) as unknown as ObjectID}})
+    const existingUser = await this.userRepository.findOne({
+      where: {
+        _id: ObjectId.createFromHexString(userId) as unknown as ObjectID,
+      },
+    });
 
-    if (!existingUser){
-      throw new BadRequestException("Invalid access token")
+    if (!existingUser) {
+      throw new BadRequestException('Invalid access token');
     }
-    if(existingUser.verified){
-      await this.userRepository.update({_id: existingUser._id}, {verificationTokens: ""})
-      return
+    if (existingUser.verified) {
+      await this.userRepository.update(
+        { _id: existingUser._id },
+        { verificationTokens: '' }
+      );
+      return;
     }
-    const verificationToken = await this.sendVerificationLink(existingUser.email, userId)
+    const verificationToken = await this.sendVerificationLink(
+      existingUser.email,
+      userId
+    );
 
-    await this.userRepository.update({_id: ObjectId.createFromHexString(userId) as unknown as ObjectID}, {verificationTokens: verificationToken});
+    await this.userRepository.update(
+      { _id: ObjectId.createFromHexString(userId) as unknown as ObjectID },
+      { verificationTokens: verificationToken }
+    );
     return verificationToken;
   }
   async forgotPassword(email: string): Promise<void> {

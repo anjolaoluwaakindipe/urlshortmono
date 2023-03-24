@@ -29,8 +29,8 @@ export class User {
   })
   roles: Roles[] = [Roles.USER];
 
-  @Column({ default: false })
-  verified: boolean;
+  @Column({ default: false, type: 'bool' })
+  verified = false;
 
   @Column({ array: true, type: 'array', default: [] })
   refreshTokens: string[];
