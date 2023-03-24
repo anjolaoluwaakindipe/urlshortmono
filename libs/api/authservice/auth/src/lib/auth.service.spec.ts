@@ -123,7 +123,7 @@ describe('AUTH TESTS', () => {
         userOne.lastname,
         userOne.firstname
       );
-      existingRefreshToken = registrationResponse.refreshToken
+      existingRefreshToken = registrationResponse.refreshToken;
     });
 
     it('SHOULD PASS when user a passes in a correct username and password', async () => {
@@ -183,19 +183,25 @@ describe('AUTH TESTS', () => {
       await expect(tf()).rejects.toThrow(UnauthorizedException);
     });
 
-    it('SHOULD FAIL when a user gives a correct password but a wrong password', async()=>{
-      const tf = async() =>{
-        await authService.login(userOne.email, "wrong");
-      }
+    it('SHOULD FAIL when a user gives a correct password but a wrong password', async () => {
+      const tf = async () => {
+        await authService.login(userOne.email, 'wrong');
+      };
 
-      await  expect(tf()).rejects.toThrow(UnauthorizedException)
-    })
+      await expect(tf()).rejects.toThrow(UnauthorizedException);
+    });
 
-    it("SHOULD PASS when a user logins with an existing refreshToken",async()=>{
-      await authService.login(userOne.email, userOne.password, existingRefreshToken);
-      const userOneInfo = await userDataSource.getMongoRepository(User).findOne({where:{email: userOne.email}});
+    it('SHOULD PASS when a user logins with an existing refreshToken', async () => {
+      await authService.login(
+        userOne.email,
+        userOne.password,
+        existingRefreshToken
+      );
+      const userOneInfo = await userDataSource
+        .getMongoRepository(User)
+        .findOne({ where: { email: userOne.email } });
       expect(userOneInfo.refreshTokens).toHaveLength(1);
-    })
+    });
   });
   describe('LOGOUT TESTS', () => {
     const user = {
@@ -243,43 +249,56 @@ describe('AUTH TESTS', () => {
         authResponse.refreshToken
       );
     });
-    it("SHOULD PASS when user does not pass a refreshToken", async()=>{
-      jest.spyOn(authService, "logout")
-      const tf = async()=>{
+    it('SHOULD PASS when user does not pass a refreshToken', async () => {
+      jest.spyOn(authService, 'logout');
+      const tf = async () => {
         await authService.logout();
-      }
-      await expect(tf()).resolves
+      };
+      await expect(tf()).resolves;
       expect(authService.logout).toHaveBeenCalledTimes(1);
-    })
+    });
 
-    it("SHOULD FAIL when user gives an invalid refresh token", async()=>{
-      const tf = async() =>{
-        await authService.logout("invalidId")
-      }
-      await expect(tf()).rejects.toThrow(UnauthorizedException)
-    })
-    it("SHOULD FAIL when the user gives an invalid userId in the refreshToken payload", async()=>{
-      const token = jwtService.sign({userId: "invaliduserid"}, {secret: process.env.REFRESH_SECRET, algorithm: "HS256"});
-      const tf = async() =>{
+    it('SHOULD FAIL when user gives an invalid refresh token', async () => {
+      const tf = async () => {
+        await authService.logout('invalidId');
+      };
+      await expect(tf()).rejects.toThrow(UnauthorizedException);
+    });
+    it('SHOULD FAIL when the user gives an invalid userId in the refreshToken payload', async () => {
+      const token = jwtService.sign(
+        { userId: 'invaliduserid' },
+        { secret: process.env.REFRESH_SECRET, algorithm: 'HS256' }
+      );
+      const tf = async () => {
         await authService.logout(token);
-      }
-      await expect(tf()).rejects.toThrow(UnauthorizedException)
-    })
-    it("SHOULD FAIL when the user gives a valid refresh token that does not belong to the user anymore", async()=>{
+      };
+      await expect(tf()).rejects.toThrow(UnauthorizedException);
+    });
+    it('SHOULD FAIL when the user gives a valid refresh token that does not belong to the user anymore', async () => {
       // test to retrigger pull request
-      const registeredUser = await userDataSource.getMongoRepository(User).findOne({where:{email: user.email}});
-      await new Promise((resolve)=>{
-        setTimeout(resolve, 1000 * 3)
-      })
-      const token = jwtService.sign({userId: registeredUser._id.toString()}, {secret: process.env.REFRESH_SECRET, expiresIn: process.env.REFRESH_DURATION, algorithm: "HS256"})
-      console.log(token)
-      const tf = async() =>{
-        await authService.logout(token)
-      }
-      await expect(tf).rejects.toThrow(UnauthorizedException)
-      const updatedUser = await userDataSource.getMongoRepository(User).findOne({where:{email: user.email}});
+      const registeredUser = await userDataSource
+        .getMongoRepository(User)
+        .findOne({ where: { email: user.email } });
+      await new Promise((resolve) => {
+        setTimeout(resolve, 1000 * 3);
+      });
+      const token = jwtService.sign(
+        { userId: registeredUser._id.toString() },
+        {
+          secret: process.env.REFRESH_SECRET,
+          expiresIn: process.env.REFRESH_DURATION,
+          algorithm: 'HS256',
+        }
+      );
+      const tf = async () => {
+        await authService.logout(token);
+      };
+      await expect(tf).rejects.toThrow(UnauthorizedException);
+      const updatedUser = await userDataSource
+        .getMongoRepository(User)
+        .findOne({ where: { email: user.email } });
       expect(updatedUser.refreshTokens).toHaveLength(0);
-    })
+    });
     it('SHOULD PASS when user logouts with an expired valid refreshtoken', async () => {
       // check if refresh token from login is in the database
       expect(userDetails.refreshTokens).toContain(authResponse.refreshToken);
@@ -393,23 +412,23 @@ describe('AUTH TESTS', () => {
         expect(emailService.sendVerificationToken).toHaveBeenCalledTimes(2);
         expect(newVerificationToken).toBe(updatedUser.verificationTokens);
       });
-      it("SHOULD FAIL when user passes an invalid userId that isn't a HEX string", ()=>{
-        const tf = async()=>{
-          await authService.sendVerification("invalid user id");
-        }
+      it("SHOULD FAIL when user passes an invalid userId that isn't a HEX string", () => {
+        const tf = async () => {
+          await authService.sendVerification('invalid user id');
+        };
 
         expect(tf).rejects.toThrow(BadRequestException);
-      })
+      });
 
-      it("SHOULD FAIL when a user passes in a valid userId that does not exist in the database", async()=>{
-        const tf = async()=>{
-          await authService.sendVerification((new ObjectId()).toString())
-        }
+      it('SHOULD FAIL when a user passes in a valid userId that does not exist in the database', async () => {
+        const tf = async () => {
+          await authService.sendVerification(new ObjectId().toString());
+        };
 
-        expect(tf).rejects.toThrow(BadRequestException)
-      })
+        expect(tf).rejects.toThrow(BadRequestException);
+      });
 
-      it("SHOULD PASS when a user is already verified and an verification link is not sent", async()=>{
+      it('SHOULD PASS when a user is already verified and an verification link is not sent', async () => {
         jest.spyOn(emailService, 'sendVerificationToken');
         // register
         await authService.register(
@@ -422,16 +441,119 @@ describe('AUTH TESTS', () => {
         const registeredUser = await userDataSource
           .getMongoRepository(User)
           .findOne({ where: { email: user.email } });
-        await userDataSource.getMongoRepository(User).update({_id: registeredUser._id}, {verified: true})
-        await authService.sendVerification(
-          registeredUser._id.toString()
-        );
+        await userDataSource
+          .getMongoRepository(User)
+          .update({ _id: registeredUser._id }, { verified: true });
+        await authService.sendVerification(registeredUser._id.toString());
         const updatedUser = await userDataSource
           .getMongoRepository(User)
           .findOne({ where: { email: user.email } });
         expect(emailService.sendVerificationToken).toHaveBeenCalledTimes(1);
-        expect(updatedUser.verificationTokens).toBe("");
-      })
+        expect(updatedUser.verificationTokens).toBe('');
+      });
+    });
+
+    describe('VERIFY USER TEST', () => {
+      const user = {
+        email: 'anjy@gmail.com',
+        username: 'anjy',
+        password: 'hello123',
+        lastname: 'Akindipe',
+        firstname: 'Anjola',
+      };
+      it('SHOULD PASS when user passes in a correct verification token', async () => {
+        jest.spyOn(emailService, 'sendVerificationToken');
+        // register
+        await authService.register(
+          user.email,
+          user.username,
+          user.password,
+          user.lastname,
+          user.firstname
+        );
+        const registeredUser = await userDataSource
+          .getMongoRepository(User)
+          .findOne({ where: { email: user.email } });
+        const newVerificationToken = await authService.sendVerification(
+          registeredUser._id.toString()
+        );
+        const updatedUser1 = await userDataSource
+          .getMongoRepository(User)
+          .findOne({ where: { email: user.email } });
+        expect(newVerificationToken).toBe(updatedUser1.verificationTokens);
+        expect(updatedUser1.verified).toBe(false);
+        // verify
+        await authService.verify(newVerificationToken);
+        const updatedUser2 = await userDataSource
+          .getMongoRepository(User)
+          .findOne({ where: { email: user.email } });
+        expect(updatedUser2.verified).toBe(true);
+      });
+      it('SHOULD FAIL when a user passes an invalid jwtToken', async () => {
+        // register
+        await authService.register(
+          user.email,
+          user.username,
+          user.password,
+          user.lastname,
+          user.firstname
+        );
+        const tf = async () => {
+          await authService.verify('invalidVerificationToken');
+        };
+
+        await expect(tf).rejects.toThrow(UnauthorizedException);
+      });
+      it('SHOULD FAIL when a user passes a valid jwttoken with an invalid userId ObjectId', async () => {
+        // register
+        await authService.register(
+          user.email,
+          user.username,
+          user.password,
+          user.lastname,
+          user.firstname
+        );
+        const token = jwtService.sign(
+          { userId: 'invalidUserId' },
+          {
+            algorithm: 'HS256',
+            secret: process.env.VERIFICATION_SECRET,
+            expiresIn: process.env.VERIFICATION_DURATION,
+          }
+        );
+        const tf = async () => {
+          await authService.verify(token);
+        };
+
+        await expect(tf).rejects.toThrow(UnauthorizedException);
+      });
+      it("SHOULD FAIL when a user passes a valid jwttoken with a valid userId ObjectId but not in the database", async()=>{
+
+        // register
+        await authService.register(
+          user.email,
+          user.username,
+          user.password,
+          user.lastname,
+          user.firstname
+        );        
+        const registeredUser = await userDataSource
+          .getMongoRepository(User)
+          .findOne({ where: { email: user.email } });
+        const token = jwtService.sign(
+          { userId: registeredUser._id.toString(), roles: registeredUser.roles },
+          {
+            algorithm: 'HS256',
+            secret: process.env.VERIFICATION_SECRET,
+            expiresIn: process.env.VERIFICATION_DURATION,
+          }
+        );
+        const tf = async () => {
+          await authService.verify(token);
+        };
+
+        await expect(tf).rejects.toThrow(UnauthorizedException);
+      });
     });
   });
 
