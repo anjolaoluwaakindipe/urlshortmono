@@ -19,7 +19,7 @@ import {
   LoginResponseDto,
 } from './auth.dto';
 import { Response, Request } from 'express';
-import { LogoutRequestDto } from './auth.dto';
+import { LogoutRequestDto, VerifyDtoRequest } from './auth.dto';
 import { JwtAuthGaurd } from '@urlshortmono/api/shared';
 import { UseGuards } from '@nestjs/common';
 
@@ -114,6 +114,11 @@ export class AuthController {
   async sendVerification(
     @Req() req: Request & { user: { userId: string; roles: any } }
   ) {
-    this.authService.sendVerification(req.user.userId)
+    this.authService.sendVerification(req.user.userId);
+  }
+
+  @Get('/verify')
+  async verifyUser(@Body() requestBody: VerifyDtoRequest) {
+    this.authService.verify(requestBody.verificationToken);
   }
 }
