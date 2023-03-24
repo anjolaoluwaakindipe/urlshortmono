@@ -1,6 +1,7 @@
 import {
   IsAlphanumeric,
   IsEmail,
+  IsJWT,
   IsNotEmpty,
   MinLength,
   min,
@@ -26,35 +27,40 @@ export class RegisterRequestDto {
 }
 
 export type RegisterResponseDto = {
-    accessToken:string,
-    refreshToken?:string,
-    username:string,
-    firstname:string,
-    lastname:string,
-    email:string
-}
+  accessToken: string;
+  refreshToken?: string;
+  username: string;
+  firstname: string;
+  lastname: string;
+  email: string;
+};
 
 // login dto
-export class LoginRequestDto{
-    @IsEmail()
-    @IsNotEmpty()
-    email:string
-    @IsNotEmpty()
-    password:string
-    refreshToken?:string
+export class LoginRequestDto {
+  @IsEmail()
+  @IsNotEmpty()
+  email: string;
+  @IsNotEmpty()
+  password: string;
+  refreshToken?: string;
 }
-
 
 export type LoginResponseDto = {
-    accessToken:string;
-    refreshToken?:string;
-    username:string;
-    firstname:string;
-    lastname:string;
-    email:string;
-}
+  accessToken: string;
+  refreshToken?: string;
+  username: string;
+  firstname: string;
+  lastname: string;
+  email: string;
+};
 
 // logout dto
-export class LogoutRequestDto{
-    refreshToken?:string;
+export class LogoutRequestDto {
+  refreshToken?: string;
+}
+
+// verify dto
+export class VerifyDtoRequest {
+  @IsJWT()
+  verificationToken: string;
 }
